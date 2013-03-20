@@ -1,2 +1,1 @@
-elasticsearch-cmpgn-contribs
-============================
+Refer to blog post for details - 
