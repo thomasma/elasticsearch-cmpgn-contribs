@@ -24,6 +24,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -86,7 +87,7 @@ public class DataLoaderImpl implements DataLoader, InitializingBean,
 
     /***/
     public void getContributionsByCandName(String candName, Double amtEqGtThan) {
-        QueryBuilder matchQuery = QueryBuilders.matchQuery("candNm", candName);
+        QueryBuilder matchQuery = QueryBuilders.matchQuery("candNm", candName).operator(Operator.AND);
         FilterBuilder contribRangeFilter = FilterBuilders.rangeFilter(
                 "contbReceiptAmt").gte(amtEqGtThan);
 
@@ -145,7 +146,7 @@ public class DataLoaderImpl implements DataLoader, InitializingBean,
     public static void main(String[] args) throws Exception {
         DataLoaderImpl dl = new DataLoaderImpl();
         dl.afterPropertiesSet();
-        dl.getContributionsByCandName("Romney", 2000d);
+        dl.getContributionsByCandName("Marco Rubio", 2000d);
         dl.destroy();
     }
 }
