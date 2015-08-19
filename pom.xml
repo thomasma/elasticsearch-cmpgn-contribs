@@ -15,8 +15,8 @@
 	</repositories>
 
 	<properties>
-		<spring.version>3.2.1.RELEASE</spring.version>
-		<springint.version>2.2.0.RELEASE</springint.version>
+		<spring.version>4.2.0.RELEASE</spring.version>
+		<springint.version>4.1.6.RELEASE</springint.version>
 		<log4j.version>1.2.17</log4j.version>
 	</properties>
 
@@ -24,16 +24,9 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>0.20.5</version>
+			<version>1.7.1</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.xerial.snappy</groupId>
-			<artifactId>snappy-java</artifactId>
-			<version>1.0.4.1</version>
-			<type>jar</type>
-			<scope>compile</scope>
-		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
@@ -109,4 +102,33 @@
 			<version>${log4j.version}</version>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>com.bigdata.elasticsearch.service.LoadDataDriver</mainClass>
+					<arguments>
+						<argument>P00000001-VA.csv</argument>
+					</arguments>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

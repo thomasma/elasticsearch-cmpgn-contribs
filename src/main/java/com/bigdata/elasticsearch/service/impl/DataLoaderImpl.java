@@ -1,5 +1,7 @@
 package com.bigdata.elasticsearch.service.impl;
 
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+
 import java.io.File;
 import java.util.Map;
 import java.util.UUID;
@@ -10,6 +12,7 @@ import javax.security.auth.Destroyable;
 import org.aver.fft.RecordListener;
 import org.aver.fft.Transformer;
 import org.aver.fft.TransformerFactory;
+import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -26,8 +29,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.facet.FacetBuilders;
-import org.elasticsearch.search.facet.statistical.StatisticalFacetBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.stats.StatsBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.InitializingBean;
@@ -40,101 +43,109 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class DataLoaderImpl implements DataLoader, InitializingBean,
-		Destroyable {
-	private Client client;
+        Destroyable {
+    private Client client;
 
-	private ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = new ObjectMapper();
 
-	/***/
-	public void loadData(File dataFile) {
-		Transformer spec = TransformerFactory
-				.getTransformer(Contribution.class);
-		spec.parseFlatFile(dataFile, new RecordListener() {
-			public boolean foundRecord(Object o) {
-				final Contribution contrib = (Contribution) o;
-				String json = null;
-				try {
-					json = mapper.writeValueAsString(contrib);
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+    /***/
+    public void loadData(File dataFile) {
+        Transformer spec = TransformerFactory
+                .getTransformer(Contribution.class);
+        spec.parseFlatFile(dataFile, new RecordListener() {
+            public boolean foundRecord(Object o) {
+                final Contribution contrib = (Contribution) o;
+                String json = null;
+                try {
+                    json = mapper.writeValueAsString(contrib);
+                } catch (JsonProcessingException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
 
-				IndexResponse response = client
-						.prepareIndex("contributions", "year2012",
-								UUID.randomUUID().toString()).setSource(json)
-						.execute().actionGet();
-				return true;
-			}
+                IndexResponse response = client
+                        .prepareIndex("contributions", "year2012",
+                                UUID.randomUUID().toString()).setSource(json)
+                        .execute().actionGet();
+                return true;
+            }
 
-			public boolean unresolvableRecord(String rec) {
-				// nothing in here for now
-				return true;
-			}
-		});
-	}
+            public boolean unresolvableRecord(String rec) {
+                // nothing in here for now
+                return true;
+            }
+        });
+    }
 
-	/***/
-	public void getContributionsByCandName(String candName, Double amtEqGtThan) {
-		QueryBuilder matchQuery = QueryBuilders.matchQuery("candNm", candName);
-		FilterBuilder contribRangeFilter = FilterBuilders.rangeFilter(
-				"contbReceiptAmt").gte(amtEqGtThan);
-		StatisticalFacetBuilder facet = FacetBuilders.statisticalFacet("stat1")
-				.field("contbReceiptAmt");
-		SearchRequestBuilder request = client
-				.prepareSearch("contributions")
-				.addSort(
-						SortBuilders.fieldSort("contbReceiptAmt").order(
-								SortOrder.DESC))
-				.setSearchType(SearchType.QUERY_THEN_FETCH)
-				.setQuery(matchQuery)
-				.setFilter(contribRangeFilter)
-				.addFacet(facet)
-				.setFrom(0)
-				.setSize(100)
-				.addFields("contbrNm", "candNm", "contbrEmployer",
-						"contbReceiptAmt");
-		System.out.println("SEARCH QUERY: " + request.toString());
+    @Override
+    public long getTotalCount() {
+        CountResponse response = client.prepareCount("contributions")
+                .setQuery(termQuery("_type", "year2012")).execute().actionGet();
+        return response.getCount();
+    }
 
-		SearchResponse response = request.execute().actionGet();
-		SearchHits searchHits = response.getHits();
-		SearchHit[] hits = searchHits.getHits();
-		for (SearchHit hit : hits) {
-			Map<String, SearchHitField> fields = hit.getFields();
-			System.out.println(hit.getId() + ", contbrEmployer="
-					+ fields.get("contbrEmployer").getValue().toString());
-		}
-	}
+    /***/
+    public void getContributionsByCandName(String candName, Double amtEqGtThan) {
+        QueryBuilder matchQuery = QueryBuilders.matchQuery("candNm", candName);
+        FilterBuilder contribRangeFilter = FilterBuilders.rangeFilter(
+                "contbReceiptAmt").gte(amtEqGtThan);
 
-	public void afterPropertiesSet() throws Exception {
-		Settings settings = ImmutableSettings.settingsBuilder()
-				.put("cluster.name", "elasticsearch").build();
-		client = new TransportClient(settings)
-				.addTransportAddress(new InetSocketTransportAddress(
-						"localhost", 9300));
-	}
+        StatsBuilder statsBuilder = AggregationBuilders.stats("stat1").field(
+                "contbReceiptAmt");
+        SearchRequestBuilder request = client
+                .prepareSearch("contributions")
+                .addSort(
+                        SortBuilders.fieldSort("contbReceiptAmt").order(
+                                SortOrder.DESC))
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                .setQuery(matchQuery)
+                .setPostFilter(contribRangeFilter)
+                .addAggregation(statsBuilder)
+                .setFrom(0)
+                .setSize(100)
+                .addFields("contbrNm", "candNm", "contbrEmployer",
+                        "contbReceiptAmt");
+        System.out.println("SEARCH QUERY: " + request.toString());
 
-	public void destroy() throws DestroyFailedException {
-		if (client != null) {
-			client.close();
-		}
-	}
+        SearchResponse response = request.execute().actionGet();
+        SearchHits searchHits = response.getHits();
+        SearchHit[] hits = searchHits.getHits();
+        for (SearchHit hit : hits) {
+            Map<String, SearchHitField> fields = hit.getFields();
+            System.out.println(hit.getId() + ", contbrEmployer="
+                    + fields.get("contbrEmployer").getValue().toString());
+        }
+    }
 
-	public boolean isDestroyed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    public void afterPropertiesSet() throws Exception {
+        Settings settings = ImmutableSettings.settingsBuilder()
+                .put("cluster.name", "elasticsearch").build();
+        client = new TransportClient(settings)
+                .addTransportAddress(new InetSocketTransportAddress(
+                        "localhost", 9300));
+    }
 
-	/**
-	 * ONLY FOR TESTING TO PRINT QUERY.
-	 * 
-	 * @param args
-	 * @throws Exception
-	 */
-	public static void main(String[] args) throws Exception {
-		DataLoaderImpl dl = new DataLoaderImpl();
-		dl.afterPropertiesSet();
-		dl.getContributionsByCandName("Romney", 2000d);
-		dl.destroy();
-	}
+    public void destroy() throws DestroyFailedException {
+        if (client != null) {
+            client.close();
+        }
+    }
+
+    public boolean isDestroyed() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /**
+     * ONLY FOR TESTING TO PRINT QUERY.
+     * 
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        DataLoaderImpl dl = new DataLoaderImpl();
+        dl.afterPropertiesSet();
+        dl.getContributionsByCandName("Romney", 2000d);
+        dl.destroy();
+    }
 }

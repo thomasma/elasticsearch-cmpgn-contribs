@@ -22,10 +22,11 @@ import org.aver.fft.annotations.Transform;
  * memo_text	        14
  * form_tp	            15
  * file_num             16
+ * tran_id              17
+ * election_tp          19
  * 
  * C00410118,"P20002978","Bachmann, Michelle","HARVEY, WILLIAM","MOBILE","AL","366010290","RETIRED","RETIRED",250,20-JUN-11,"","","","SA17A",736166
  */
-
 @Transform(columnSeparator = ",", skipFirstLine = true)
 public class Contribution implements Serializable {
     private static final long serialVersionUID = 9189233814578311344L;
@@ -46,6 +47,26 @@ public class Contribution implements Serializable {
     private String memoText;
     private String formTp;
     private String fileNum;
+    private String tranId;
+    private String electionTp;
+
+    @Column(position = 17)
+    public String getTranId() {
+        return tranId;
+    }
+
+    public void setTranId(String tranId) {
+        this.tranId = tranId;
+    }
+
+    @Column(position = 18)
+    public String getElectionTp() {
+        return electionTp;
+    }
+
+    public void setElectionTp(String electionTp) {
+        this.electionTp = electionTp;
+    }
 
     public String getId() {
         return id;
@@ -201,23 +222,29 @@ public class Contribution implements Serializable {
 
     @Override
     public String toString() {
-        return "Contribution [id=" + id + ", cmteId=" + cmteId + ", candId=" + candId + ", candNm="
-                + candNm + ", contbrNm=" + contbrNm + ", contbrCity=" + contbrCity + ", contbrSt="
-                + contbrSt + ", contbrZip=" + contbrZip + ", contbrEmployer=" + contbrEmployer
-                + ", contbrOccupation=" + contbrOccupation + ", contbReceiptAmt=" + contbReceiptAmt
-                + ", contbReceiptDt=" + contbReceiptDt + ", receiptDesc=" + receiptDesc
-                + ", memoCd=" + memoCd + ", memoText=" + memoText + ", formTp=" + formTp
-                + ", fileNum=" + fileNum + ", getId()=" + getId() + ", getCmteId()=" + getCmteId()
-                + ", getCandId()=" + getCandId() + ", getCandNm()=" + getCandNm()
-                + ", getContbrNm()=" + getContbrNm() + ", getContbrCity()=" + getContbrCity()
-                + ", getContbrSt()=" + getContbrSt() + ", getContbrZip()=" + getContbrZip()
-                + ", getContbrEmployer()=" + getContbrEmployer() + ", getContbrOccupation()="
-                + getContbrOccupation() + ", getContbReceiptAmt()=" + getContbReceiptAmt()
-                + ", getContbReceiptDt()=" + getContbReceiptDt() + ", getReceiptDesc()="
-                + getReceiptDesc() + ", getMemoCd()=" + getMemoCd() + ", getMemoText()="
-                + getMemoText() + ", getFormTp()=" + getFormTp() + ", getFileNum()=" + getFileNum()
-                + ", getClass()=" + getClass() + ", hashCode()=" + hashCode() + ", toString()="
-                + super.toString() + "]";
+        return "Contribution [id=" + id + ", cmteId=" + cmteId + ", candId="
+                + candId + ", candNm=" + candNm + ", contbrNm=" + contbrNm
+                + ", contbrCity=" + contbrCity + ", contbrSt=" + contbrSt
+                + ", contbrZip=" + contbrZip + ", contbrEmployer="
+                + contbrEmployer + ", contbrOccupation=" + contbrOccupation
+                + ", contbReceiptAmt=" + contbReceiptAmt + ", contbReceiptDt="
+                + contbReceiptDt + ", receiptDesc=" + receiptDesc + ", memoCd="
+                + memoCd + ", memoText=" + memoText + ", formTp=" + formTp
+                + ", fileNum=" + fileNum + ", getId()=" + getId()
+                + ", getCmteId()=" + getCmteId() + ", getCandId()="
+                + getCandId() + ", getCandNm()=" + getCandNm()
+                + ", getContbrNm()=" + getContbrNm() + ", getContbrCity()="
+                + getContbrCity() + ", getContbrSt()=" + getContbrSt()
+                + ", getContbrZip()=" + getContbrZip()
+                + ", getContbrEmployer()=" + getContbrEmployer()
+                + ", getContbrOccupation()=" + getContbrOccupation()
+                + ", getContbReceiptAmt()=" + getContbReceiptAmt()
+                + ", getContbReceiptDt()=" + getContbReceiptDt()
+                + ", getReceiptDesc()=" + getReceiptDesc() + ", getMemoCd()="
+                + getMemoCd() + ", getMemoText()=" + getMemoText()
+                + ", getFormTp()=" + getFormTp() + ", getFileNum()="
+                + getFileNum() + ", getClass()=" + getClass() + ", hashCode()="
+                + hashCode() + ", toString()=" + super.toString() + "]";
     }
 
 }

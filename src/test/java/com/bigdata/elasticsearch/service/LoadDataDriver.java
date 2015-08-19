@@ -4,8 +4,6 @@ import java.io.File;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.bigdata.elasticsearch.service.DataLoader;
-
 /**
  * Run this to load data into Mongodb using Spring Integration and ActiveMQ.
  */
@@ -19,12 +17,14 @@ public class LoadDataDriver {
         // --------------------------------
         // load data - point this to your path
         // --------------------------------
-        loader.loadData(new File("/home/mathew/temp/P00000001-VA.csv"));
+        loader.loadData(new File("/Users/mathew/temp/P00000001-VA.csv"));
+        //loader.loadData(new File(args[0]));
 
         // --------------------------------
         // print total count for verification
         // --------------------------------
-        //System.out.println("Total Count of Documents = " + loader.getTotalCount());
+        System.out.println("Total Count of Documents = "
+                + loader.getTotalCount());
 
         //
         ctx.close();
